@@ -1,0 +1,106 @@
+#!/usr/bin/python
+#
+# QProfiler is a QEMU profiler based on QMP
+#
+# Copyright (c) 2003-2019 Matias Vara <matiasevara@gmail.com>
+# All Rights Reserved
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+from __future__ import print_function
+import sys, os, re
+from qmp import QEMUMonitorProtocol
+from time import sleep
+import subprocess
+
+def main(args):
+    path = None
+
+    # duration of the test in second
+    duration = 5
+
+    # sampling frecuency in second
+    frecuency = 0.05
+
+    while len(args):
+        arg = args[0]
+
+        if arg.startswith('--'):
+            arg = arg[2:]
+            if arg.find('=') == -1:
+                value = True
+            else:
+                arg, value = arg.split('=', 1)
+
+            if arg in ['path']:
+                if type(value) == str:
+                    path = value
+            elif arg in ['duration']:
+                duration = int(value)
+            elif arg in ['frecuency']:
+                frecuency = float(value)
+            else:
+                print('Unknown argument "%s"' % arg)
+
+            args = args[1:]
+        else:
+            break
+
+    if not path:
+        print("QMP path isn't set, use --path=qmp-monitor-address or set QMP_PATH")
+        return 1
+    
+    def do_command(srv, cmd, **kwds):
+        rsp = srv.cmd(cmd, kwds)
+        if 'error' in rsp:
+            raise Exception(rsp['error']['desc'])
+        return rsp['return']
+
+    srv = QEMUMonitorProtocol(path)
+    srv.connect()
+
+    arguments = {}
+    command = 'human-monitor-command'
+
+    r = int(duration // frecuency)
+    
+    rip_hash = {}
+ 
+    for i in range(r):
+      arguments['command-line'] = 'info registers'
+      rsp = do_command(srv, command, **arguments)   
+      
+      regs = re.search(r'RIP=([\w]+)\s', rsp)
+      rip = regs.group(1)
+      arguments['command-line'] = 'xp $ebp+8'
+      
+      rsp = do_command(srv, command, **arguments)
+      regs = re.search(r':\s([\w]+)',rsp)
+      rip2 = regs.group(1)
+      
+      if rip in rip_hash:
+        rip_hash[rip] += 1
+      else:
+        rip_hash[rip] = 1
+
+      sleep(frecuency)
+ 
+    srv.close()
+
+    for i in rip_hash:
+      tmp = subprocess.check_output("addr2line -p -s -f -e StaticWebServer " + i , shell=True)
+      print(tmp.rstrip(), 'has been executed ', rip_hash[i], ' times in ', duration, 's') 
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
