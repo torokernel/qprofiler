@@ -44,4 +44,4 @@ For the moment, Qprofiler only samples the booting core.
 
 ## License
 
-GPLv3
+GPLv2
