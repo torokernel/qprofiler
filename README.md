@@ -12,7 +12,7 @@ The repo includes a simple example to profile the appliance **HelloWorld** which
 
 In a different terminal, execute:
 
-`./qprofiler --path=./qmp-sock --duration=10 --frecuency=0.05 --filename=HelloWorld`
+`./qprofiler --path=./qmp-sock --duration=10 --frequency=0.05 --filename=HelloWorld`
 
 You will get something like:
 
@@ -26,7 +26,7 @@ You will get something like:
 
 Compile your multiboot kernel with **-gl** flag to add debug symbols. Then, run qemu by using the **-kernel YourKernel** option and add **-qmp unix:./qmp-sock,server,nowait** to redirect qmp to a socket. To lauch qprofile, execute:
 
-`./qprofiler --path=./qmp-sock --duration=10 --frecuency=0.05 --filename=YouKernel`
+`./qprofiler --path=./qmp-sock --duration=10 --frequency=0.05 --filename=YouKernel`
 
 The line above tells qpprofiler to test during **10** seconds and to sample Qemu every **0.05** seconds. In addition, the line specifies in **path** the socket and in **filename** the binary. If everything worked well after 10 seconds, you are going to get something like:
 
