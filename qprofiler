@@ -87,11 +87,6 @@ def main(args):
       
     regs = re.search(r'RIP=([\w]+)\s', rsp)
     rip = regs.group(1)
-    arguments['command-line'] = 'xp $ebp+8'
-      
-    rsp = do_command(srv, command, **arguments)
-    regs = re.search(r':\s([\w]+)',rsp)
-    rip2 = regs.group(1)
       
     if rip in rip_hash:
       rip_hash[rip] += 1
