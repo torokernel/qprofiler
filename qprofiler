@@ -2,7 +2,7 @@
 #
 # QProfiler is a QEMU profiler based on QMP
 #
-# Copyright (c) 2003-2019 Matias Vara <matiasevara@gmail.com>
+# Copyright (c) 2019-2022 Matias Vara <matiasevara@gmail.com>
 # All Rights Reserved
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,10 +28,10 @@ def main(args):
   path = None
   filename = None
 
-  # duration of the test in second
+  # duration of the test in seconds
   duration = 5
 
-  # sampling frequency in second
+  # sampling frequency in seconds
   frequency = 0.05
 
   while len(args):
@@ -96,19 +96,19 @@ def main(args):
     sleep(frequency)
  
   srv.close()
-
   rip_hash_name = {}
 
   for i in rip_hash:
-    tmp = subprocess.check_output("addr2line -p -s -f -e "+ filename + " " + i , shell=True).rstrip()
+      with open(os.devnull, 'w') as devnull:
+          tmp = subprocess.check_output("addr2line --demangle -p -s -f -e "+ filename + " " + i , shell=True, stderr=devnull).rstrip()
 
-    if tmp in rip_hash_name:
-      rip_hash_name[tmp] += rip_hash[i]
-    else:
-      rip_hash_name[tmp] = rip_hash[i]
+      if tmp in rip_hash_name:
+        rip_hash_name[tmp] += rip_hash[i]
+      else:
+        rip_hash_name[tmp] = rip_hash[i]
 
   for i in rip_hash_name:
-    print(int((float(rip_hash_name[i]) / float(r))*100), '% of time ', i, 'has been executed ')
+    print('{:>8} {}'.format(rip_hash_name[i], i))
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[1:]))
