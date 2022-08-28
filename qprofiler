@@ -64,7 +64,7 @@ def main(args):
   if not path:
     print("Path isn't set, use --path=qmp-monitor-address")
     return 1
-    
+
   def do_command(srv, cmd, **kwds):
     rsp = srv.cmd(cmd, kwds)
     if 'error' in rsp:
@@ -78,23 +78,23 @@ def main(args):
   command = 'human-monitor-command'
 
   r = int(duration // frequency)
-    
+
   rip_hash = {}
- 
+
   for i in range(r):
     arguments['command-line'] = 'info registers'
     rsp = do_command(srv, command, **arguments)
-      
+
     regs = re.search(r'RIP=([\w]+)\s', rsp)
     rip = regs.group(1)
-      
+
     if rip in rip_hash:
       rip_hash[rip] += 1
     else:
       rip_hash[rip] = 1
 
     sleep(frequency)
- 
+
   srv.close()
   rip_hash_name = {}
 
@@ -107,8 +107,9 @@ def main(args):
       else:
         rip_hash_name[tmp] = rip_hash[i]
 
-  for i in rip_hash_name:
-    print('{:>8} {}'.format(rip_hash_name[i], i))
+  sorted_rip = sorted(rip_hash_name.items(), reverse=True, key=lambda x: x[1])
+  for i in sorted_rip:
+      print('{} {:>8}'.format(list(i)[1], list(i)[0]));
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[1:]))
